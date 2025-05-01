@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/webhook"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "message": "Accepted",
+      "messageId": "{{randomValue type='UUID'}}"
+    }
+  }
+}

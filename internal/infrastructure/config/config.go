@@ -1,0 +1,86 @@
+package config
+
+import (
+	"github.com/atakurt/messagingApp/internal/infrastructure/logger"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"time"
+)
+
+type Config struct {
+	Server struct {
+		Port int
+	}
+	Scheduler struct {
+		Enabled   bool
+		Interval  time.Duration
+		BatchSize int
+	}
+	Database struct {
+		DSN string
+	}
+	Redis struct {
+		Addr string
+	}
+	WebhookUrl string
+}
+
+var Cfg Config
+
+func Init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("./configs")
+	viper.SetEnvPrefix("APP")
+	viper.SetDefault("scheduler.enabled", true)
+	viper.AutomaticEnv()
+
+	viper.BindEnv("DATABASE_DSN")
+	viper.BindEnv("REDIS_ADDR")
+	viper.BindEnv("WEBHOOK_URL")
+	viper.BindEnv("SCHEDULER_INTERVAL")
+	viper.BindEnv("SCHEDULER_BATCHSIZE")
+
+	if err := viper.ReadInConfig(); err != nil {
+		logger.Log.Fatal("Error reading config", zap.Error(err))
+	}
+
+	if err := viper.Unmarshal(&Cfg); err != nil {
+		logger.Log.Fatal("Unable to decode config into struct", zap.Error(err))
+	}
+
+	if envDSN := viper.GetString("DATABASE_DSN"); envDSN != "" {
+		Cfg.Database.DSN = envDSN
+		logger.Log.Info("database.dsn overridden by env", zap.String("dsn", envDSN))
+	}
+	if envRedis := viper.GetString("REDIS_ADDR"); envRedis != "" {
+		Cfg.Redis.Addr = envRedis
+		logger.Log.Info("redis.addr overridden by env", zap.String("redis.addr", envRedis))
+	}
+
+	if webhookUrl := viper.GetString("WEBHOOK_URL"); webhookUrl != "" {
+		Cfg.WebhookUrl = webhookUrl
+		logger.Log.Info("webhookUrl overridden by env", zap.String("webhookUrl", webhookUrl))
+	}
+
+	if interval := viper.GetDuration("SCHEDULER_INTERVAL"); interval != 0 {
+		Cfg.Scheduler.Interval = interval
+		logger.Log.Info("scheduler.interval overridden", zap.Duration("interval", interval))
+	}
+	if batchSize := viper.GetInt("SCHEDULER_BATCHSIZE"); batchSize != 0 {
+		Cfg.Scheduler.BatchSize = batchSize
+		logger.Log.Info("scheduler.batchsize overridden", zap.Int("batchsize", batchSize))
+	}
+
+	logger.Log.Info("scheduler.enabled", zap.Bool("enabled", Cfg.Scheduler.Enabled))
+
+	logger.Log.Info("Loaded config file", zap.String("file", viper.ConfigFileUsed()))
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		logger.Log.Info("Config file changed", zap.String("file", e.Name))
+		viper.Unmarshal(&Cfg)
+	})
+}

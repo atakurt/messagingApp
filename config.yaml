@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+scheduler:
+  enabled: true
+  interval: 2m
+  batchSize: 2
+
+database:
+  dsn: host=localhost user=postgres password=postgres dbname=messages port=5432 sslmode=disable
+
+redis:
+  addr: localhost:6379
+
+webhookUrl: http://localhost:8081
