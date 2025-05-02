@@ -5,9 +5,9 @@
 package mocks
 
 import (
-	context "context"
-	reflect "reflect"
-	time "time"
+	"context"
+	"reflect"
+	"time"
 
 	redis "github.com/atakurt/messagingApp/internal/infrastructure/redis"
 	gomock "github.com/golang/mock/gomock"

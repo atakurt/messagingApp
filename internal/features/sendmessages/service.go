@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -destination=../../mocks/mock_message_service.go -package=mocks github.com/atakurt/messagingApp/internal/features/sendmessages MessageServiceInterface
 type MessageServiceInterface interface {
 	ProcessUnsentMessages(ctx context.Context)
 }

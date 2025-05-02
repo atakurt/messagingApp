@@ -2,9 +2,10 @@ package scheduler
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 
 	redisClient "github.com/atakurt/messagingApp/internal/infrastructure/redis"
 
@@ -71,11 +72,6 @@ func (s *Scheduler) Start(ctx context.Context) {
 		return
 	}
 
-	err := s.redisClient.Set(ctx, "scheduler.enabled", true, 0)
-	if err != nil {
-		logger.Log.Error("Unable to set scheduler.enabled to true")
-	}
-
 	if s.ticker != nil {
 		logger.Log.Warn("Scheduler didnt stop yet")
 		return
@@ -113,12 +109,9 @@ func (s *Scheduler) Stop(ctx context.Context) {
 	if s.stopChan != nil {
 		close(s.stopChan)
 		s.wg.Wait()
+		s.stopChan = nil
 	}
 	s.running = false
-	err := s.redisClient.Set(ctx, "scheduler.enabled", false, 0)
-	if err != nil {
-		logger.Log.Error("Unable to set scheduler.enabled to false")
-	}
 	logger.Log.Info("Scheduler stopped")
 }
 

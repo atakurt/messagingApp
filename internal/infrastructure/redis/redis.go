@@ -21,6 +21,13 @@ type PubSub struct {
 	pubsub *redis.PubSub
 }
 
+// NewPubSub creates a new PubSub with the given redis.PubSub
+func NewPubSub(pubsub *redis.PubSub) *PubSub {
+	return &PubSub{
+		pubsub: pubsub,
+	}
+}
+
 // ReceiveMessage receives a message from the subscription
 func (p *PubSub) ReceiveMessage(ctx context.Context) (*redis.Message, error) {
 	return p.pubsub.ReceiveMessage(ctx)
