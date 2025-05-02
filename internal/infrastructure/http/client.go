@@ -7,6 +7,7 @@ import (
 	"github.com/atakurt/messagingApp/internal/infrastructure/config"
 )
 
+//go:generate mockgen -destination=../../mocks/mock_http_client.go -package=mocks github.com/atakurt/messagingApp/internal/infrastructure/http Client
 type Client interface {
 	Post(url, contentType string, body io.Reader) (*http.Response, error)
 }
