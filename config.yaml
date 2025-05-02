@@ -5,6 +5,7 @@ scheduler:
   enabled: true
   interval: 2m
   batchSize: 2
+  maxConcurrent: 2
 
 database:
   dsn: host=localhost user=postgres password=postgres dbname=messages port=5432 sslmode=disable

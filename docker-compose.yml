@@ -3,20 +3,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-    container_name: messaging-app
-    ports:
-      - "8080:8080"
     environment:
       - ENV=development
-      - APP_DATABASE_DSN=host=postgres user=postgres password=postgres dbname=messages port=5432 sslmode=disable
+      - APP_DATABASE_DSN=host=pgbouncer user=postgres password=postgres dbname=messages port=6432 sslmode=disable
       - APP_REDIS_ADDR=redis:6379
       - APP_WEBHOOK_URL=http://wiremock:8080/webhook
       - APP_SCHEDULER_BATCHSIZE=2
       - APP_SCHEDULER_INTERVAL=2m
       - APP_SCHEDULER_ENABLED=true
+      - APP_SCHEDULER_MAX_CONCURRENT=2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.messagingapp.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.messagingapp.entrypoints=web"
+      - "traefik.http.services.messagingapp.loadbalancer.server.port=8080"
     depends_on:
       postgres:
-          condition: service_healthy
+        condition: service_healthy
       redis:
         condition: service_healthy
       wiremock:
@@ -40,6 +43,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgbouncer:
+    image: bitnami/pgbouncer:1.24.1
+    container_name: pgbouncer
+    ports:
+      - "6432:6432"
+    environment:
+      - POSTGRESQL_HOST=postgres
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=messages
+      - PGBOUNCER_DATABASE=messages
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=50
+      - RESERVE_POOL_SIZE=25
+      - RESERVE_POOL_TIMEOUT=5.0
+      - SERVER_RESET_QUERY=DISCARD ALL
+      - IGNORE_STARTUP_PARAMETERS=extra_float_digits
+      - LOG_CONNECTIONS=1
+      - LOG_DISCONNECTIONS=1
+      - LOG_POOLER_ERRORS=1
+      - LISTEN_PORT=6432
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
@@ -67,6 +97,22 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  traefik:
+    image: traefik:v3.3.6
+    container_name: traefik
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+      - --api.insecure=true
+    ports:
+      - "8080:80"
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
 
 volumes:
   pgdata:

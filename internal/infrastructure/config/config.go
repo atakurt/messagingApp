@@ -13,9 +13,10 @@ type Config struct {
 		Port int
 	}
 	Scheduler struct {
-		Enabled   bool
-		Interval  time.Duration
-		BatchSize int
+		Enabled       bool
+		Interval      time.Duration
+		BatchSize     int
+		MaxConcurrent int
 	}
 	Database struct {
 		DSN string
@@ -23,6 +24,15 @@ type Config struct {
 	Redis struct {
 		Addr string
 	}
+
+	Http struct {
+		Timeout               time.Duration
+		MaxIdleConns          int
+		IdleConnTimeout       time.Duration
+		TlsHandshakeTimeout   time.Duration
+		ExpectContinueTimeout time.Duration
+	}
+
 	WebhookUrl string
 }
 
@@ -35,6 +45,7 @@ func Init() {
 	viper.AddConfigPath("./configs")
 	viper.SetEnvPrefix("APP")
 	viper.SetDefault("scheduler.enabled", true)
+	viper.SetDefault("scheduler.maxConcurrent", 1)
 	viper.AutomaticEnv()
 
 	viper.BindEnv("DATABASE_DSN")
@@ -69,9 +80,15 @@ func Init() {
 		Cfg.Scheduler.Interval = interval
 		logger.Log.Info("scheduler.interval overridden", zap.Duration("interval", interval))
 	}
+
 	if batchSize := viper.GetInt("SCHEDULER_BATCHSIZE"); batchSize != 0 {
 		Cfg.Scheduler.BatchSize = batchSize
 		logger.Log.Info("scheduler.batchsize overridden", zap.Int("batchsize", batchSize))
+	}
+
+	if maxConcurrent := viper.GetInt("SCHEDULER_MAX_CONCURRENT"); maxConcurrent != 0 {
+		Cfg.Scheduler.MaxConcurrent = maxConcurrent
+		logger.Log.Info("scheduler.maxConcurrent overridden", zap.Int("maxConcurrent", maxConcurrent))
 	}
 
 	logger.Log.Info("scheduler.enabled", zap.Bool("enabled", Cfg.Scheduler.Enabled))
