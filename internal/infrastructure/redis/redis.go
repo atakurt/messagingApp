@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+//go:generate mockgen -destination=../../mocks/mock_redis.go -package=mocks github.com/atakurt/messagingApp/internal/infrastructure/redis Client
 type Client interface {
 	Exists(ctx context.Context, key string) (bool, error)
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
