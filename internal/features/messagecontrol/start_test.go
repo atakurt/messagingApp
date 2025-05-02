@@ -27,14 +27,14 @@ func TestSchedulerError(t *testing.T) {
 func TestStartHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMock      func(*gomock.Controller) *mocks.MockClient
+		setupMock      func(*gomock.Controller) *mocks.MockRedisClient
 		expectedStatus int
 		expectedBody   string
 	}{
 		{
 			name: "Success",
-			setupMock: func(ctrl *gomock.Controller) *mocks.MockClient {
-				mockRedis := mocks.NewMockClient(ctrl)
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockRedisClient {
+				mockRedis := mocks.NewMockRedisClient(ctrl)
 				mockRedis.EXPECT().Publish(gomock.Any(), "scheduler:commands", "start").Return(nil)
 				return mockRedis
 			},
@@ -43,8 +43,8 @@ func TestStartHandler(t *testing.T) {
 		},
 		{
 			name: "Redis error",
-			setupMock: func(ctrl *gomock.Controller) *mocks.MockClient {
-				mockRedis := mocks.NewMockClient(ctrl)
+			setupMock: func(ctrl *gomock.Controller) *mocks.MockRedisClient {
+				mockRedis := mocks.NewMockRedisClient(ctrl)
 				mockRedis.EXPECT().Publish(gomock.Any(), "scheduler:commands", "start").Return(errors.New("redis connection failed"))
 				return mockRedis
 			},

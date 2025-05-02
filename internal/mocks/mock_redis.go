@@ -13,31 +13,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockClient is a mock of Client interface.
-type MockClient struct {
+// MockRedisClient is a mock of Client interface.
+type MockRedisClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockClientMockRecorder
+	recorder *MockRedisClientMockRecorder
 }
 
-// MockClientMockRecorder is the mock recorder for MockClient.
-type MockClientMockRecorder struct {
-	mock *MockClient
+// MockRedisClientMockRecorder is the mock recorder for MockRedisClient.
+type MockRedisClientMockRecorder struct {
+	mock *MockRedisClient
 }
 
-// NewMockClient creates a new mock instance.
-func NewMockClient(ctrl *gomock.Controller) *MockClient {
-	mock := &MockClient{ctrl: ctrl}
-	mock.recorder = &MockClientMockRecorder{mock}
+// NewMockRedisClient creates a new mock instance.
+func NewMockRedisClient(ctrl *gomock.Controller) *MockRedisClient {
+	mock := &MockRedisClient{ctrl: ctrl}
+	mock.recorder = &MockRedisClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockClient) EXPECT() *MockClientMockRecorder {
+func (m *MockRedisClient) EXPECT() *MockRedisClientMockRecorder {
 	return m.recorder
 }
 
 // Exists mocks base method.
-func (m *MockClient) Exists(arg0 context.Context, arg1 string) (bool, error) {
+func (m *MockRedisClient) Exists(arg0 context.Context, arg1 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Exists", arg0, arg1)
 	ret0, _ := ret[0].(bool)
@@ -46,13 +46,13 @@ func (m *MockClient) Exists(arg0 context.Context, arg1 string) (bool, error) {
 }
 
 // Exists indicates an expected call of Exists.
-func (mr *MockClientMockRecorder) Exists(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRedisClientMockRecorder) Exists(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exists", reflect.TypeOf((*MockClient)(nil).Exists), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exists", reflect.TypeOf((*MockRedisClient)(nil).Exists), arg0, arg1)
 }
 
 // Publish mocks base method.
-func (m *MockClient) Publish(arg0 context.Context, arg1 string, arg2 interface{}) error {
+func (m *MockRedisClient) Publish(arg0 context.Context, arg1 string, arg2 interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Publish", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -60,13 +60,13 @@ func (m *MockClient) Publish(arg0 context.Context, arg1 string, arg2 interface{}
 }
 
 // Publish indicates an expected call of Publish.
-func (mr *MockClientMockRecorder) Publish(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockRedisClientMockRecorder) Publish(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockClient)(nil).Publish), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockRedisClient)(nil).Publish), arg0, arg1, arg2)
 }
 
 // Set mocks base method.
-func (m *MockClient) Set(arg0 context.Context, arg1 string, arg2 interface{}, arg3 time.Duration) error {
+func (m *MockRedisClient) Set(arg0 context.Context, arg1 string, arg2 interface{}, arg3 time.Duration) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -74,13 +74,13 @@ func (m *MockClient) Set(arg0 context.Context, arg1 string, arg2 interface{}, ar
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockClientMockRecorder) Set(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockRedisClientMockRecorder) Set(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockClient)(nil).Set), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRedisClient)(nil).Set), arg0, arg1, arg2, arg3)
 }
 
 // SetNX mocks base method.
-func (m *MockClient) SetNX(arg0 context.Context, arg1 string, arg2 interface{}, arg3 time.Duration) (bool, error) {
+func (m *MockRedisClient) SetNX(arg0 context.Context, arg1 string, arg2 interface{}, arg3 time.Duration) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetNX", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)
@@ -89,13 +89,13 @@ func (m *MockClient) SetNX(arg0 context.Context, arg1 string, arg2 interface{}, 
 }
 
 // SetNX indicates an expected call of SetNX.
-func (mr *MockClientMockRecorder) SetNX(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockRedisClientMockRecorder) SetNX(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNX", reflect.TypeOf((*MockClient)(nil).SetNX), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNX", reflect.TypeOf((*MockRedisClient)(nil).SetNX), arg0, arg1, arg2, arg3)
 }
 
 // Subscribe mocks base method.
-func (m *MockClient) Subscribe(arg0 context.Context, arg1 string) *redis.PubSub {
+func (m *MockRedisClient) Subscribe(arg0 context.Context, arg1 string) *redis.PubSub {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1)
 	ret0, _ := ret[0].(*redis.PubSub)
@@ -103,7 +103,7 @@ func (m *MockClient) Subscribe(arg0 context.Context, arg1 string) *redis.PubSub 
 }
 
 // Subscribe indicates an expected call of Subscribe.
-func (mr *MockClientMockRecorder) Subscribe(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRedisClientMockRecorder) Subscribe(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockClient)(nil).Subscribe), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockRedisClient)(nil).Subscribe), arg0, arg1)
 }
