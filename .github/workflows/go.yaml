@@ -8,7 +8,6 @@ permissions:
   contents: read
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -17,7 +16,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.23
+          go-version: '1.24'
+
+      - name: Install dependencies
+        run: go mod tidy
 
       - name: Build
         run: go build -v ./...
