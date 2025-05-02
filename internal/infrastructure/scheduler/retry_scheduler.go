@@ -27,10 +27,41 @@ func NewRetryScheduler(service messageretry.MessageRetryServiceInterface, redisC
 }
 
 func (s *RetryScheduler) Start(ctx context.Context) {
+	if s.running {
+		logger.Log.Warn("Retry scheduler already running")
+		return
+	}
+
+	// Start the command subscription goroutine first
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Log.Error("Recovered from panic in command subscription goroutine", zap.Any("error", r))
+			}
+		}()
+		s.subscribeToCommands(ctx)
+	}()
+
+	// Only start the processing goroutine if scheduler is enabled
+	if config.Cfg.Scheduler.Enabled {
+		s.startProcessing(ctx)
+	} else {
+		logger.Log.Info("Retry scheduler started in disabled state, waiting for enable command")
+	}
+}
+
+func (s *RetryScheduler) startProcessing(ctx context.Context) {
 	s.running = true
 	s.ticker = time.NewTicker(config.Cfg.Scheduler.Interval)
 
+	// Start the processing goroutine
 	go func() {
+		defer func() {
+			if s.ticker != nil {
+				s.ticker.Stop()
+			}
+		}()
+
 		for {
 			select {
 			case <-s.ticker.C:
@@ -39,16 +70,12 @@ func (s *RetryScheduler) Start(ctx context.Context) {
 				}
 			case <-ctx.Done():
 				logger.Log.Info("Retry scheduler stopped due to context cancellation")
-				s.ticker.Stop()
 				return
 			}
 		}
 	}()
 
-	// Subscribe to control commands
-	go s.subscribeToCommands(ctx)
-
-	logger.Log.Info("Retry scheduler started")
+	logger.Log.Info("Retry scheduler started with processing enabled")
 }
 
 func (s *RetryScheduler) subscribeToCommands(ctx context.Context) {
@@ -64,13 +91,34 @@ func (s *RetryScheduler) subscribeToCommands(ctx context.Context) {
 
 		switch msg.Payload {
 		case "start":
-			s.running = true
-			logger.Log.Info("Retry scheduler started via Redis command")
+			if !s.running && config.Cfg.Scheduler.Enabled {
+				s.startProcessing(ctx)
+			} else if !config.Cfg.Scheduler.Enabled {
+				logger.Log.Warn("Cannot start scheduler: scheduler is disabled in config")
+			}
 		case "stop":
 			s.running = false
+			if s.ticker != nil {
+				s.ticker.Stop()
+				s.ticker = nil
+			}
 			logger.Log.Info("Retry scheduler stopped via Redis command")
 		default:
 			logger.Log.Warn("Unknown command received", zap.String("command", msg.Payload))
 		}
 	}
+}
+
+func (s *RetryScheduler) Stop(ctx context.Context) {
+	if !s.running {
+		logger.Log.Warn("Retry scheduler is not running")
+		return
+	}
+
+	s.running = false
+	if s.ticker != nil {
+		s.ticker.Stop()
+		s.ticker = nil
+	}
+	logger.Log.Info("Retry scheduler stopped")
 }

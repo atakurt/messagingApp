@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=service.go -destination=../../mocks/message_retry_service_mock.go -package=mocks MessageRetryServiceInterface
 type MessageRetryServiceInterface interface {
 	ProcessMessageRetries(ctx context.Context)
 }
