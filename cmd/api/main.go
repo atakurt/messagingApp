@@ -69,5 +69,9 @@ func main() {
 		return c.Redirect("/swagger/index.html", fiber.StatusFound)
 	})
 
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	app.Listen(":8080")
 }

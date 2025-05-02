@@ -17,6 +17,11 @@ services:
       - "traefik.http.routers.messagingapp.rule=PathPrefix(`/`)"
       - "traefik.http.routers.messagingapp.entrypoints=web"
       - "traefik.http.services.messagingapp.loadbalancer.server.port=8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
