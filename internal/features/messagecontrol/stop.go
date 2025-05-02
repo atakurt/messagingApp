@@ -14,8 +14,12 @@ import (
 func StopHandler(ctx *fiber.Ctx, redisClient redisClient.Client) error {
 	err := scheduler.PublishCommand(ctx.Context(), redisClient, "stop")
 	if err != nil {
+		schedulerErr := &SchedulerError{
+			Operation: "stop",
+			Err:       err,
+		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to publish stop command",
+			"error": schedulerErr.Error(),
 		})
 	}
 
