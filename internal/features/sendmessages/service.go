@@ -185,7 +185,6 @@ func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Messag
 	if err != nil {
 		logger.Log.Error("Failed to send message", zap.Error(err))
 		mu.Lock()
-		// todo retry caching with exponencial backoff
 		s.repository.InsertRetry(tx, *msg, err.Error())
 		mu.Unlock()
 		return nil, err
@@ -205,7 +204,6 @@ func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Messag
 	if err := json.Unmarshal(bodyBytes, &hookResp); err != nil {
 		logger.Log.Error("Failed to parse webhook response", zap.ByteString("body", bodyBytes), zap.Error(err))
 		mu.Lock()
-		// todo retry caching with exponencial backoff
 		s.repository.InsertRetry(tx, *msg, err.Error())
 		mu.Unlock()
 		return nil, err

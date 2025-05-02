@@ -13,10 +13,11 @@ type Config struct {
 		Port int
 	}
 	Scheduler struct {
-		Enabled       bool
-		Interval      time.Duration
-		BatchSize     int
-		MaxConcurrent int
+		Enabled            bool
+		Interval           time.Duration
+		BatchSize          int
+		MaxConcurrent      int
+		MaxRetryConcurrent int
 	}
 	Database struct {
 		DSN string
@@ -46,6 +47,7 @@ func Init() {
 	viper.SetEnvPrefix("APP")
 	viper.SetDefault("scheduler.enabled", true)
 	viper.SetDefault("scheduler.maxConcurrent", 1)
+	viper.SetDefault("scheduler.maxRetryConcurrent", 1)
 	viper.AutomaticEnv()
 
 	viper.BindEnv("DATABASE_DSN")

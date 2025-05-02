@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/atakurt/messagingApp/docs"
 	"github.com/atakurt/messagingApp/internal/features/messagecontrol"
+	"github.com/atakurt/messagingApp/internal/features/messageretry"
 	"github.com/atakurt/messagingApp/internal/features/sendmessages"
 	"github.com/atakurt/messagingApp/internal/infrastructure/config"
 	"github.com/atakurt/messagingApp/internal/infrastructure/db"
@@ -40,10 +41,14 @@ func main() {
 	}))
 
 	messageService := sendmessages.NewService(messageRepository, client, redisClient)
-	scheduler := scheduler.NewScheduler(messageService, redisClient)
+	messageRetryService := messageretry.NewService(messageRepository, client)
 
-	// Start the scheduler
-	scheduler.Start(defaultCtx)
+	mainScheduler := scheduler.NewScheduler(messageService, redisClient)
+	retryScheduler := scheduler.NewRetryScheduler(messageRetryService, redisClient)
+
+	// Start the schedulers
+	mainScheduler.Start(defaultCtx)
+	retryScheduler.Start(defaultCtx)
 
 	app := fiber.New()
 

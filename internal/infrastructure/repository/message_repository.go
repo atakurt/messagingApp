@@ -15,6 +15,9 @@ type MessageRepositoryInterface interface {
 	GetSentMessages(lastID, limit int) ([]db.Message, error)
 	UpdateMessageAsSent(msg *db.Message, messageID string, sentAt time.Time) error
 	InsertRetry(tx *gorm.DB, msg db.Message, errMsg string) error
+	GetMessageRetries(limit int) ([]db.MessageRetry, error)
+	UpdateRetryCount(tx *gorm.DB, retryID uint, count int, errMsg string) error
+	MoveToDeadLetter(tx *gorm.DB, msg db.Message, errMsg string) error
 }
 
 type MessageRepository struct {
@@ -80,4 +83,33 @@ func (r *MessageRepository) InsertRetry(tx *gorm.DB, msg db.Message, errMsg stri
 		CreatedAt:         time.Now(),
 	}
 	return tx.Create(&retry).Error
+}
+
+func (r *MessageRepository) GetMessageRetries(limit int) ([]db.MessageRetry, error) {
+	var retries []db.MessageRetry
+	err := r.db.Clauses(
+		clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"},
+	).Limit(limit).
+		Where("retry_count < ?", 5).
+		Find(&retries).Error
+	return retries, err
+}
+
+func (r *MessageRepository) UpdateRetryCount(tx *gorm.DB, retryID uint, count int, errMsg string) error {
+	update := map[string]interface{}{
+		"RetryCount": count,
+		"LastError":  errMsg,
+	}
+	return tx.Model(&db.MessageRetry{}).Where("id = ?", retryID).Updates(update).Error
+}
+
+func (r *MessageRepository) MoveToDeadLetter(tx *gorm.DB, msg db.Message, errMsg string) error {
+	deadLetter := db.MessageDeadLetter{
+		OriginalMessageID: msg.ID,
+		PhoneNumber:       msg.PhoneNumber,
+		Content:           msg.Content,
+		LastError:         errMsg,
+		FailedAt:          time.Now(),
+	}
+	return tx.Create(&deadLetter).Error
 }
