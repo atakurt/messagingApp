@@ -28,3 +28,4 @@ docs
 go.sum
 messagingApp
 .idea
+.DS_Store

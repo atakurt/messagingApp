@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+//go:generate mockgen -destination=../../mocks/mock_repository.go -package=mocks github.com/atakurt/messagingApp/internal/infrastructure/repository MessageRepositoryInterface
 type MessageRepositoryInterface interface {
 	GetUnsentMessages(limit int) ([]db.Message, error)
 	MarkMessageInProcess(msg *db.Message, processedAt time.Time) error

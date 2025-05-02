@@ -1,9 +1,9 @@
 package messagecontrol
 
 import (
+	"github.com/atakurt/messagingApp/internal/infrastructure/db"
 	"time"
 
-	"github.com/atakurt/messagingApp/internal/infrastructure/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -11,11 +11,16 @@ type ListSentServiceInterface interface {
 	ListSentMessages(c *fiber.Ctx) error
 }
 
-type ListSentService struct {
-	repository *repository.MessageRepository
+// Define a repository interface
+type MessageRepositoryInterface interface {
+	GetSentMessages(lastID, limit int) ([]db.Message, error)
 }
 
-func NewService(repository *repository.MessageRepository) *ListSentService {
+type ListSentService struct {
+	repository MessageRepositoryInterface
+}
+
+func NewService(repository MessageRepositoryInterface) *ListSentService {
 	return &ListSentService{
 		repository: repository,
 	}
