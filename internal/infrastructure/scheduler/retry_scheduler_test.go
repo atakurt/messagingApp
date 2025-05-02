@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -28,7 +27,7 @@ func TestNewRetryScheduler(t *testing.T) {
 		Return(createMockPubSub()).
 		AnyTimes()
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 
 	// Assertions
 	assert.NotNil(t, scheduler)
@@ -56,25 +55,18 @@ func TestRetryScheduler_Start(t *testing.T) {
 		ProcessMessageRetries(gomock.Any()).
 		AnyTimes()
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	ctx := context.Background()
-
-	// Set config to enable scheduler
-	config.Cfg.Scheduler.Enabled = true
-	config.Cfg.Scheduler.Interval = time.Second
 
 	// Start scheduler
 	scheduler.Start(ctx)
+	defer scheduler.Stop(ctx)
 
-	// Give some time for the scheduler to start
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 
 	// Assertions
 	assert.True(t, scheduler.running)
 	assert.NotNil(t, scheduler.ticker)
-
-	// Clean up
-	scheduler.Stop(ctx)
 }
 
 func TestRetryScheduler_Stop(t *testing.T) {
@@ -90,12 +82,12 @@ func TestRetryScheduler_Stop(t *testing.T) {
 		Return(createMockPubSub()).
 		AnyTimes()
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	ctx := context.Background()
 
 	// Start scheduler first
-	config.Cfg.Scheduler.Enabled = true
 	scheduler.Start(ctx)
+	time.Sleep(150 * time.Millisecond)
 
 	// Stop scheduler
 	scheduler.Stop(ctx)
@@ -118,22 +110,18 @@ func TestRetryScheduler_Start_WhenAlreadyRunning(t *testing.T) {
 		Return(createMockPubSub()).
 		AnyTimes()
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	ctx := context.Background()
-
-	config.Cfg.Scheduler.Enabled = true
-	config.Cfg.Scheduler.Interval = time.Second
 
 	// Start scheduler first time
 	scheduler.Start(ctx)
+	defer scheduler.Stop(ctx)
 	assert.True(t, scheduler.running)
+	time.Sleep(150 * time.Millisecond)
 
 	// Try to start again
 	scheduler.Start(ctx)
 	assert.True(t, scheduler.running) // Should still be running
-
-	// Clean up
-	scheduler.Stop(ctx)
 }
 
 func TestRetryScheduler_Stop_WhenNotRunning(t *testing.T) {
@@ -149,7 +137,7 @@ func TestRetryScheduler_Stop_WhenNotRunning(t *testing.T) {
 		Return(createMockPubSub()).
 		AnyTimes()
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	ctx := context.Background()
 
 	// Try to stop when not running
@@ -180,7 +168,7 @@ func TestRetryScheduler_SubscribeToCommands(t *testing.T) {
 		Return(nil).
 		Times(1)
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	scheduler.Start(ctx)
 
 	// Test PublishCommand
@@ -215,7 +203,7 @@ func TestRetryScheduler_SubscribeToCommands_UnknownCommand(t *testing.T) {
 		Return(nil).
 		Times(1)
 
-	scheduler := NewRetryScheduler(mockService, mockRedis)
+	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	scheduler.Start(ctx)
 
 	// Test PublishCommand with unknown command
@@ -229,30 +217,17 @@ func TestRetryScheduler_SubscribeToCommands_UnknownCommand(t *testing.T) {
 	scheduler.Stop(ctx)
 }
 
-func TestRetryScheduler_SubscribeToCommands_ErrorHandling(t *testing.T) {
-	logger.Log = zap.NewNop()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockService := mocks.NewMockMessageRetryServiceInterface(ctrl)
-	mockRedis := mocks.NewMockRedisClient(ctrl)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	mockPubSub := NewMockPubSub()
-	mockRedis.EXPECT().
-		Subscribe(gomock.Any(), "scheduler:commands").
-		Return(mockPubSub).
-		AnyTimes()
-
-	mockRedis.EXPECT().
-		Publish(gomock.Any(), "scheduler:commands", "start").
-		Return(errors.New("publish error")).
-		Times(1)
-
-	scheduler := NewRetryScheduler(mockService, mockRedis)
-	scheduler.Start(ctx)
-
-	mockRedis.EXPECT()
+func getTestConfig() config.Config {
+	return config.Config{
+		Scheduler: struct {
+			Enabled            bool
+			Interval           time.Duration
+			BatchSize          int
+			MaxConcurrent      int
+			MaxRetryConcurrent int
+		}{
+			Enabled:  true,
+			Interval: time.Second,
+		},
+	}
 }

@@ -24,12 +24,12 @@ type MessageServiceInterface interface {
 }
 
 type MessageService struct {
-	repository  *repository.MessageRepository
+	repository  repository.MessageRepositoryInterface
 	httpClient  httpClient.Client
 	redisClient redisClient.Client
 }
 
-func NewService(repository *repository.MessageRepository, httpClient httpClient.Client, redisClient redisClient.Client) *MessageService {
+func NewService(repository repository.MessageRepositoryInterface, httpClient httpClient.Client, redisClient redisClient.Client) *MessageService {
 	return &MessageService{
 		repository:  repository,
 		httpClient:  httpClient,

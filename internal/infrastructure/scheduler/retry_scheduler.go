@@ -16,13 +16,15 @@ type RetryScheduler struct {
 	redisClient redis.Client
 	ticker      *time.Ticker
 	running     bool
+	cfg         config.Config
 }
 
-func NewRetryScheduler(service messageretry.MessageRetryServiceInterface, redisClient redis.Client) *RetryScheduler {
+func NewRetryScheduler(service messageretry.MessageRetryServiceInterface, redisClient redis.Client, cfg config.Config) *RetryScheduler {
 	return &RetryScheduler{
 		service:     service,
 		redisClient: redisClient,
 		running:     false,
+		cfg:         cfg,
 	}
 }
 
@@ -34,16 +36,11 @@ func (s *RetryScheduler) Start(ctx context.Context) {
 
 	// Start the command subscription goroutine first
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Log.Error("Recovered from panic in command subscription goroutine", zap.Any("error", r))
-			}
-		}()
 		s.subscribeToCommands(ctx)
 	}()
 
 	// Only start the processing goroutine if scheduler is enabled
-	if config.Cfg.Scheduler.Enabled {
+	if s.cfg.Scheduler.Enabled {
 		s.startProcessing(ctx)
 	} else {
 		logger.Log.Info("Retry scheduler started in disabled state, waiting for enable command")
@@ -52,7 +49,7 @@ func (s *RetryScheduler) Start(ctx context.Context) {
 
 func (s *RetryScheduler) startProcessing(ctx context.Context) {
 	s.running = true
-	s.ticker = time.NewTicker(config.Cfg.Scheduler.Interval)
+	s.ticker = time.NewTicker(s.cfg.Scheduler.Interval)
 
 	// Start the processing goroutine
 	go func() {
@@ -91,9 +88,9 @@ func (s *RetryScheduler) subscribeToCommands(ctx context.Context) {
 
 		switch msg.Payload {
 		case "start":
-			if !s.running && config.Cfg.Scheduler.Enabled {
+			if !s.running && s.cfg.Scheduler.Enabled {
 				s.startProcessing(ctx)
-			} else if !config.Cfg.Scheduler.Enabled {
+			} else if !s.cfg.Scheduler.Enabled {
 				logger.Log.Warn("Cannot start scheduler: scheduler is disabled in config")
 			}
 		case "stop":

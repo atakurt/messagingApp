@@ -44,7 +44,7 @@ func main() {
 	messageRetryService := messageretry.NewService(messageRepository, client)
 
 	mainScheduler := scheduler.NewScheduler(messageService, redisClient)
-	retryScheduler := scheduler.NewRetryScheduler(messageRetryService, redisClient)
+	retryScheduler := scheduler.NewRetryScheduler(messageRetryService, redisClient, config.Cfg)
 
 	// Start the schedulers
 	mainScheduler.Start(defaultCtx)

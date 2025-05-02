@@ -19,8 +19,4 @@ func Init() {
 	if err != nil {
 		logger.Log.Fatal("Failed to connect to DB", zap.Error(err))
 	}
-
-	//if err := DB.AutoMigrate(&Message{}, &MessageDeadLetter{}); err != nil {
-	//	logger.Log.Fatal("Failed to auto-migrate DB", zap.Error(err))
-	//}
 }
