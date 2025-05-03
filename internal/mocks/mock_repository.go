@@ -37,18 +37,18 @@ func (m *MockMessageRepositoryInterface) EXPECT() *MockMessageRepositoryInterfac
 }
 
 // GetMessageRetries mocks base method.
-func (m *MockMessageRepositoryInterface) GetMessageRetries(arg0 int) ([]db.MessageRetry, error) {
+func (m *MockMessageRepositoryInterface) GetMessageRetries(arg0 *gorm.DB, arg1 int) ([]db.MessageRetry, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageRetries", arg0)
+	ret := m.ctrl.Call(m, "GetMessageRetries", arg0, arg1)
 	ret0, _ := ret[0].([]db.MessageRetry)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMessageRetries indicates an expected call of GetMessageRetries.
-func (mr *MockMessageRepositoryInterfaceMockRecorder) GetMessageRetries(arg0 interface{}) *gomock.Call {
+func (mr *MockMessageRepositoryInterfaceMockRecorder) GetMessageRetries(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageRetries", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).GetMessageRetries), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageRetries", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).GetMessageRetries), arg0, arg1)
 }
 
 // GetSentMessages mocks base method.
@@ -67,18 +67,18 @@ func (mr *MockMessageRepositoryInterfaceMockRecorder) GetSentMessages(arg0, arg1
 }
 
 // GetUnsentMessages mocks base method.
-func (m *MockMessageRepositoryInterface) GetUnsentMessages(arg0 int) ([]db.Message, error) {
+func (m *MockMessageRepositoryInterface) GetUnsentMessages(arg0 *gorm.DB, arg1 int) ([]db.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUnsentMessages", arg0)
+	ret := m.ctrl.Call(m, "GetUnsentMessages", arg0, arg1)
 	ret0, _ := ret[0].([]db.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUnsentMessages indicates an expected call of GetUnsentMessages.
-func (mr *MockMessageRepositoryInterfaceMockRecorder) GetUnsentMessages(arg0 interface{}) *gomock.Call {
+func (mr *MockMessageRepositoryInterfaceMockRecorder) GetUnsentMessages(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnsentMessages", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).GetUnsentMessages), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnsentMessages", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).GetUnsentMessages), arg0, arg1)
 }
 
 // InsertRetry mocks base method.
@@ -96,17 +96,17 @@ func (mr *MockMessageRepositoryInterfaceMockRecorder) InsertRetry(arg0, arg1, ar
 }
 
 // MarkMessageInProcess mocks base method.
-func (m *MockMessageRepositoryInterface) MarkMessageInProcess(arg0 *db.Message, arg1 time.Time) error {
+func (m *MockMessageRepositoryInterface) MarkMessageInProcess(arg0 *gorm.DB, arg1 *db.Message, arg2 time.Time) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkMessageInProcess", arg0, arg1)
+	ret := m.ctrl.Call(m, "MarkMessageInProcess", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // MarkMessageInProcess indicates an expected call of MarkMessageInProcess.
-func (mr *MockMessageRepositoryInterfaceMockRecorder) MarkMessageInProcess(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockMessageRepositoryInterfaceMockRecorder) MarkMessageInProcess(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkMessageInProcess", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).MarkMessageInProcess), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkMessageInProcess", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).MarkMessageInProcess), arg0, arg1, arg2)
 }
 
 // MoveToDeadLetter mocks base method.
@@ -138,17 +138,17 @@ func (mr *MockMessageRepositoryInterfaceMockRecorder) UpdateMessageAsError(arg0,
 }
 
 // UpdateMessageAsSent mocks base method.
-func (m *MockMessageRepositoryInterface) UpdateMessageAsSent(arg0 *db.Message, arg1 string, arg2 time.Time) error {
+func (m *MockMessageRepositoryInterface) UpdateMessageAsSent(arg0 *gorm.DB, arg1 *db.Message, arg2 string, arg3 time.Time) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMessageAsSent", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UpdateMessageAsSent", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateMessageAsSent indicates an expected call of UpdateMessageAsSent.
-func (mr *MockMessageRepositoryInterfaceMockRecorder) UpdateMessageAsSent(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockMessageRepositoryInterfaceMockRecorder) UpdateMessageAsSent(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMessageAsSent", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).UpdateMessageAsSent), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMessageAsSent", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).UpdateMessageAsSent), arg0, arg1, arg2, arg3)
 }
 
 // UpdateRetryCount mocks base method.

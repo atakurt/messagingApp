@@ -83,7 +83,26 @@ This architecture offers a reliable, scalable, and maintainable solution for sch
 🚀 To run
 
 ```
+docker-compose down -v --remove-orphans
+docker-compose up --scale messaging-app=2 --build
+
+docker-compose down -v --remove-orphans
 docker-compose up --scale messaging-app=4 --build
+
+docker-compose down -v --remove-orphans
+docker-compose up --scale messaging-app=8 --build
+
+and so on ..
+```
+
+scheduler can be configured with config.yaml
+
+```
+scheduler:
+    enabled: true
+    interval: 2m
+    batchSize: 2
+    maxConcurrent: 2
 ```
 
 🌐 Swagger url

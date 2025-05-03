@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"gorm.io/gorm"
 	"io"
 	"sync"
 	"time"
@@ -44,7 +45,7 @@ func (s *MessageRetryService) ProcessMessageRetries(ctx context.Context) {
 		_ = tx.Rollback()
 	}()
 
-	retries, err := s.fetchPendingRetries()
+	retries, err := s.fetchPendingRetries(tx)
 	if err != nil {
 		return
 	}
@@ -74,8 +75,8 @@ func (s *MessageRetryService) beginTransaction() (*db.Transaction, error) {
 	return tx, nil
 }
 
-func (s *MessageRetryService) fetchPendingRetries() ([]db.MessageRetry, error) {
-	retries, err := s.repository.GetMessageRetries(config.Cfg.Scheduler.BatchSize)
+func (s *MessageRetryService) fetchPendingRetries(tx *gorm.DB) ([]db.MessageRetry, error) {
+	retries, err := s.repository.GetMessageRetries(tx, config.Cfg.Scheduler.BatchSize)
 	if err != nil {
 		logger.Log.Error("Failed to select message retries with locking", zap.Error(err))
 		return nil, err
@@ -196,7 +197,7 @@ func (s *MessageRetryService) processRetry(ctx context.Context, tx *db.Transacti
 	now := time.Now()
 
 	mu.Lock()
-	err = s.repository.UpdateMessageAsSent(msg, hookResp.MessageID, now)
+	err = s.repository.UpdateMessageAsSent(tx, msg, hookResp.MessageID, now)
 	mu.Unlock()
 
 	if err != nil {

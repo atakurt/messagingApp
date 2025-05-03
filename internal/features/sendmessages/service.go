@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"gorm.io/gorm"
 	"io"
 	"strconv"
 	"sync"
@@ -46,7 +47,7 @@ func (s *MessageService) ProcessUnsentMessages(ctx context.Context) {
 		_ = tx.Rollback()
 	}()
 
-	messages, err := s.fetchUnsentMessages()
+	messages, err := s.fetchUnsentMessages(tx)
 	if err != nil {
 		return
 	}
@@ -76,8 +77,8 @@ func (s *MessageService) beginTransaction() (*db.Transaction, error) {
 	return tx, nil
 }
 
-func (s *MessageService) fetchUnsentMessages() ([]db.Message, error) {
-	messages, err := s.repository.GetUnsentMessages(config.Cfg.Scheduler.BatchSize)
+func (s *MessageService) fetchUnsentMessages(tx *gorm.DB) ([]db.Message, error) {
+	messages, err := s.repository.GetUnsentMessages(tx, config.Cfg.Scheduler.BatchSize)
 	if err != nil {
 		logger.Log.Error("Failed to select unsent messages with locking", zap.Error(err))
 		return nil, err
@@ -130,7 +131,7 @@ func (s *MessageService) processMessage(ctx context.Context, tx *db.Transaction,
 
 	now := time.Now()
 	mu.Lock()
-	err := s.repository.MarkMessageInProcess(msg, now)
+	err := s.repository.MarkMessageInProcess(tx, msg, now)
 	mu.Unlock()
 	if err != nil {
 		logger.Log.Error("Failed to mark message in process", zap.Uint("messageID", msg.ID), zap.Error(err))
@@ -142,7 +143,7 @@ func (s *MessageService) processMessage(ctx context.Context, tx *db.Transaction,
 		return false
 	}
 
-	return s.finalizeMessageProcessing(ctx, msg, hookResp, now, redisKey, mu)
+	return s.finalizeMessageProcessing(ctx, tx, msg, hookResp, now, redisKey, mu)
 }
 
 func (s *MessageService) canProcessMessage(ctx context.Context, redisKey string, messageID uint) bool {
@@ -215,6 +216,7 @@ func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Messag
 
 func (s *MessageService) finalizeMessageProcessing(
 	ctx context.Context,
+	tx *gorm.DB,
 	msg *db.Message,
 	hookResp *HookResponse,
 	timestamp time.Time,
@@ -222,7 +224,7 @@ func (s *MessageService) finalizeMessageProcessing(
 	mu *sync.Mutex,
 ) bool {
 	mu.Lock()
-	if err := s.repository.UpdateMessageAsSent(msg, hookResp.MessageID, timestamp); err != nil {
+	if err := s.repository.UpdateMessageAsSent(tx, msg, hookResp.MessageID, timestamp); err != nil {
 		logger.Log.Error("Failed to update message", zap.Uint("messageID", msg.ID), zap.Error(err))
 		mu.Unlock()
 		return false

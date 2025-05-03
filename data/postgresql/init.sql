@@ -16,21 +16,15 @@ CREATE INDEX IF NOT EXISTS idx_messages_status ON messages (status);
 INSERT INTO messages (phone_number, content, status)
 VALUES
   ('+905321234567', 'Hey whats up ?', 'pending'),
-  ('+905321234568', 'Reminder: Call tomorrow.', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending'),
-  ('+905321234567', 'call me as soon as possible !', 'pending');
+  ('+905321234568', 'Reminder: Call tomorrow.', 'pending');
+
+
+INSERT INTO messages (phone_number, content, status)
+SELECT
+    '+905' || LPAD((FLOOR(RANDOM() * 100000000)::int)::text, 8, '0'),
+    'Random message ' || i,
+    'pending'
+FROM generate_series(1, 62) AS s(i);
 
 
 CREATE TABLE message_retries (

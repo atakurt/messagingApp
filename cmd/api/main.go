@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/atakurt/messagingApp/docs"
 	"github.com/atakurt/messagingApp/internal/features/messagecontrol"
 	"github.com/atakurt/messagingApp/internal/features/messageretry"
@@ -73,5 +74,5 @@ func main() {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Listen(":8080")
+	app.Listen(fmt.Sprintf(":%d", config.Cfg.Server.Port))
 }

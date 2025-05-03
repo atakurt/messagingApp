@@ -58,10 +58,11 @@ services:
       - POSTGRESQL_PASSWORD=postgres
       - POSTGRESQL_DATABASE=messages
       - PGBOUNCER_DATABASE=messages
-      - POOL_MODE=transaction
+      - POOL_MODE=session
       - MAX_CLIENT_CONN=1000
-      - DEFAULT_POOL_SIZE=50
-      - RESERVE_POOL_SIZE=25
+      - DEFAULT_POOL_SIZE=80
+      - RESERVE_POOL_SIZE=40
+      - QUERY_WAIT_TIMEOUT=60
       - RESERVE_POOL_TIMEOUT=5.0
       - SERVER_RESET_QUERY=DISCARD ALL
       - IGNORE_STARTUP_PARAMETERS=extra_float_digits

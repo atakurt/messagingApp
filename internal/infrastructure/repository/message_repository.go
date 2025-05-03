@@ -10,13 +10,13 @@ import (
 
 //go:generate mockgen -destination=../../mocks/mock_repository.go -package=mocks github.com/atakurt/messagingApp/internal/infrastructure/repository MessageRepositoryInterface
 type MessageRepositoryInterface interface {
-	GetUnsentMessages(limit int) ([]db.Message, error)
-	MarkMessageInProcess(msg *db.Message, processedAt time.Time) error
+	GetUnsentMessages(tx *gorm.DB, limit int) ([]db.Message, error)
+	MarkMessageInProcess(tx *gorm.DB, msg *db.Message, processedAt time.Time) error
 	UpdateMessageAsError(tx *gorm.DB, msg *db.Message, errMsg string) error
 	GetSentMessages(lastID, limit int) ([]db.Message, error)
-	UpdateMessageAsSent(msg *db.Message, messageID string, sentAt time.Time) error
+	UpdateMessageAsSent(tx *gorm.DB, msg *db.Message, messageID string, sentAt time.Time) error
 	InsertRetry(tx *gorm.DB, msg db.Message, errMsg string) error
-	GetMessageRetries(limit int) ([]db.MessageRetry, error)
+	GetMessageRetries(tx *gorm.DB, limit int) ([]db.MessageRetry, error)
 	UpdateRetryCount(tx *gorm.DB, retryID uint, count int, errMsg string) error
 	MoveToDeadLetter(tx *gorm.DB, msg db.Message, errMsg string) error
 }
@@ -29,9 +29,9 @@ func NewMessageRepository(db *gorm.DB) *MessageRepository {
 	return &MessageRepository{db: db}
 }
 
-func (r *MessageRepository) GetUnsentMessages(limit int) ([]db.Message, error) {
+func (r *MessageRepository) GetUnsentMessages(tx *gorm.DB, limit int) ([]db.Message, error) {
 	var messages []db.Message
-	err := r.db.Clauses(
+	err := tx.Clauses(
 		clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"},
 	).Limit(limit).
 		Where("status = ?", db.StatusPending).
@@ -39,8 +39,8 @@ func (r *MessageRepository) GetUnsentMessages(limit int) ([]db.Message, error) {
 	return messages, err
 }
 
-func (r *MessageRepository) MarkMessageInProcess(msg *db.Message, processedAt time.Time) error {
-	return r.db.Model(msg).Updates(map[string]interface{}{
+func (r *MessageRepository) MarkMessageInProcess(tx *gorm.DB, msg *db.Message, processedAt time.Time) error {
+	return tx.Model(msg).Updates(map[string]interface{}{
 		"Status":      db.StatusProcessing,
 		"ProcessedAt": processedAt,
 	}).Error
@@ -65,13 +65,13 @@ func (r *MessageRepository) GetSentMessages(lastID, limit int) ([]db.Message, er
 	return messages, result.Error
 }
 
-func (r *MessageRepository) UpdateMessageAsSent(msg *db.Message, messageID string, sentAt time.Time) error {
+func (r *MessageRepository) UpdateMessageAsSent(tx *gorm.DB, msg *db.Message, messageID string, sentAt time.Time) error {
 	update := map[string]interface{}{
 		"Status":    db.StatusDone,
 		"SentAt":    sentAt,
 		"MessageID": messageID,
 	}
-	return r.db.Model(msg).Updates(update).Error
+	return tx.Model(msg).Updates(update).Error
 }
 
 func (r *MessageRepository) InsertRetry(tx *gorm.DB, msg db.Message, errMsg string) error {
@@ -86,9 +86,9 @@ func (r *MessageRepository) InsertRetry(tx *gorm.DB, msg db.Message, errMsg stri
 	return tx.Create(&retry).Error
 }
 
-func (r *MessageRepository) GetMessageRetries(limit int) ([]db.MessageRetry, error) {
+func (r *MessageRepository) GetMessageRetries(tx *gorm.DB, limit int) ([]db.MessageRetry, error) {
 	var retries []db.MessageRetry
-	err := r.db.Clauses(
+	err := tx.Clauses(
 		clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"},
 	).Limit(limit).
 		Where("retry_count < ?", 5).
