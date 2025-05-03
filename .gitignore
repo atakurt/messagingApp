@@ -26,7 +26,6 @@ go.work.sum
 .env
 
 docs
-go.sum
 messagingApp
 .idea
 .DS_Store
