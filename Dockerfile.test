@@ -1,0 +1,42 @@
+FROM golang:1.24-alpine AS builder
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+RUN apk add --no-cache git ca-certificates bash curl
+
+# Install swag CLI
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+COPY . .
+
+# Generate Swagger docs
+RUN swag init --generalInfo cmd/api/main.go --output docs
+
+RUN go build -o messagingApp ./cmd/api
+
+FROM alpine:3.21.3
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN apk add --no-cache ca-certificates curl
+
+WORKDIR /app
+
+COPY --from=builder /app/messagingApp .
+COPY --from=builder /app/config.yaml .
+COPY --from=builder /app/docs ./docs
+
+USER appuser
+
+EXPOSE 8080
+
+ENV ENV=development
+
+CMD ["./messagingApp"]
