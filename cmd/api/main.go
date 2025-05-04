@@ -24,7 +24,6 @@ import (
 // @title Message Sender API
 // @version 1.0
 // @description Auto message scheduler
-// @host localhost:8080
 // @BasePath /
 // @contact.name  Dev Team
 func main() {
