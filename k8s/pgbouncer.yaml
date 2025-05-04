@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: messaging-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+    spec:
+      containers:
+        - name: pgbouncer
+          image: bitnami/pgbouncer:1.24.1
+          ports:
+            - containerPort: 6432
+          env:
+            - name: POSTGRESQL_HOST
+              value: postgres
+            - name: POSTGRESQL_PORT
+              value: "5432"
+            - name: PGBOUNCER_PORT
+              value: "6432"
+            - name: POSTGRESQL_USERNAME
+              value: postgres
+            - name: POSTGRESQL_PASSWORD
+              value: postgres
+            - name: POSTGRESQL_DATABASE
+              value: messages
+            - name: PGBOUNCER_DATABASE
+              value: messages
+            - name: POOL_MODE
+              value: session
+            - name: MAX_CLIENT_CONN
+              value: "1000"
+            - name: DEFAULT_POOL_SIZE
+              value: "80"
+            - name: RESERVE_POOL_SIZE
+              value: "40"
+            - name: QUERY_WAIT_TIMEOUT
+              value: "60"
+            - name: RESERVE_POOL_TIMEOUT
+              value: "5.0"
+            - name: SERVER_RESET_QUERY
+              value: DISCARD ALL
+            - name: IGNORE_STARTUP_PARAMETERS
+              value: extra_float_digits
+            - name: LOG_CONNECTIONS
+              value: "1"
+            - name: LOG_DISCONNECTIONS
+              value: "1"
+            - name: LOG_POOLER_ERRORS
+              value: "1"

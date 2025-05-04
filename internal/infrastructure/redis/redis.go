@@ -14,6 +14,7 @@ type Client interface {
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
 	Subscribe(ctx context.Context, channel string) *PubSub
 	Publish(ctx context.Context, channel string, message interface{}) error
+	Ping(ctx context.Context) *redis.StatusCmd
 }
 
 // PubSub represents a Redis Pub/Sub subscription
@@ -72,4 +73,8 @@ func (r *RedisClient) Subscribe(ctx context.Context, channel string) *PubSub {
 
 func (r *RedisClient) Publish(ctx context.Context, channel string, message interface{}) error {
 	return r.client.Publish(ctx, channel, message).Err()
+}
+
+func (r *RedisClient) Ping(ctx context.Context) *redis.StatusCmd {
+	return r.client.Ping(ctx)
 }

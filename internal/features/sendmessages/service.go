@@ -68,8 +68,8 @@ func (s *MessageService) ProcessUnsentMessages(ctx context.Context) {
 	}
 }
 
-func (s *MessageService) beginTransaction() (*db.Transaction, error) {
-	tx := db.DB.Begin()
+func (s *MessageService) beginTransaction() (*gorm.DB, error) {
+	tx := s.repository.GetDB().Begin()
 	if tx.Error != nil {
 		logger.Log.Error("Failed to begin transaction", zap.Error(tx.Error))
 		return nil, tx.Error

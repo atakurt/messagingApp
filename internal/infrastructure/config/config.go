@@ -1,11 +1,13 @@
 package config
 
 import (
+	"os"
+	"time"
+
 	"github.com/atakurt/messagingApp/internal/infrastructure/logger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Config struct {
@@ -40,10 +42,16 @@ type Config struct {
 var Cfg Config
 
 func Init() {
+	configPath := os.Getenv("APP_CONFIG_PATH")
+	if configPath == "" {
+		configPath = "./configs"
+	}
+	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(".")
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./configs")
+
 	viper.SetEnvPrefix("APP")
 	viper.SetDefault("scheduler.enabled", true)
 	viper.SetDefault("scheduler.maxConcurrent", 1)
@@ -96,6 +104,7 @@ func Init() {
 	logger.Log.Info("scheduler.enabled", zap.Bool("enabled", Cfg.Scheduler.Enabled))
 
 	logger.Log.Info("Loaded config file", zap.String("file", viper.ConfigFileUsed()))
+	logger.Log.Info("Loaded config value", zap.Any("cfg", Cfg))
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {

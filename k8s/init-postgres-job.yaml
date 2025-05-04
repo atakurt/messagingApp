@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-postgres-data
+  namespace: messaging-app
+spec:
+  template:
+    spec:
+      containers:
+        - name: psql
+          image: postgres:17.0-alpine3.20
+          command: ["psql"]
+          args:
+            [
+              "-h", "postgres",
+              "-U", "postgres",
+              "-d", "messages",
+              "-f", "/scripts/init.sql"
+            ]
+          env:
+            - name: PGPASSWORD
+              value: "postgres"
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+      restartPolicy: OnFailure
+      volumes:
+        - name: init-script
+          configMap:
+            name: init-sql-config

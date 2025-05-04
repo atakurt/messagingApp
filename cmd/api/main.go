@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	_ "github.com/atakurt/messagingApp/docs"
 	"github.com/atakurt/messagingApp/internal/features/messagecontrol"
 	"github.com/atakurt/messagingApp/internal/features/messageretry"
@@ -10,6 +11,7 @@ import (
 	"github.com/atakurt/messagingApp/internal/infrastructure/db"
 	httpClient "github.com/atakurt/messagingApp/internal/infrastructure/http"
 	"github.com/atakurt/messagingApp/internal/infrastructure/logger"
+	"github.com/atakurt/messagingApp/internal/infrastructure/monitoring"
 	"github.com/atakurt/messagingApp/internal/infrastructure/redis"
 	"github.com/atakurt/messagingApp/internal/infrastructure/repository"
 	"github.com/atakurt/messagingApp/internal/infrastructure/scheduler"
@@ -33,8 +35,10 @@ func main() {
 	config.Init()
 	db.Init()
 
+	gormDB := db.DB.GetDB()
+
 	// Create the message service
-	messageRepository := repository.NewMessageRepository(db.DB)
+	messageRepository := repository.NewMessageRepository(gormDB)
 	client := httpClient.NewHttpClient()
 
 	redisClient := redis.NewClient(defaultCtx, goRedis.NewClient(&goRedis.Options{
@@ -70,8 +74,14 @@ func main() {
 		return c.Redirect("/swagger/index.html", fiber.StatusFound)
 	})
 
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
+	// monitoring
+	monitoringService := monitoring.NewMonitoringService(db.DB, redisClient)
+	app.Get("/ready", func(c *fiber.Ctx) error {
+		return monitoringService.Readiness(c)
+	})
+
+	app.Get("/live", func(c *fiber.Ctx) error {
+		return monitoringService.Liveness(c)
 	})
 
 	app.Listen(fmt.Sprintf(":%d", config.Cfg.Server.Port))

@@ -5,11 +5,12 @@
 package mocks
 
 import (
-	"context"
-	"reflect"
-	"time"
+	context "context"
+	reflect "reflect"
+	time "time"
 
 	redis "github.com/atakurt/messagingApp/internal/infrastructure/redis"
+	redis0 "github.com/go-redis/redis/v8"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -49,6 +50,20 @@ func (m *MockRedisClient) Exists(arg0 context.Context, arg1 string) (bool, error
 func (mr *MockRedisClientMockRecorder) Exists(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exists", reflect.TypeOf((*MockRedisClient)(nil).Exists), arg0, arg1)
+}
+
+// Ping mocks base method.
+func (m *MockRedisClient) Ping(arg0 context.Context) *redis0.StatusCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping", arg0)
+	ret0, _ := ret[0].(*redis0.StatusCmd)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockRedisClientMockRecorder) Ping(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockRedisClient)(nil).Ping), arg0)
 }
 
 // Publish mocks base method.

@@ -19,6 +19,7 @@ type MessageRepositoryInterface interface {
 	GetMessageRetries(tx *gorm.DB, limit int) ([]db.MessageRetry, error)
 	UpdateRetryCount(tx *gorm.DB, retryID uint, count int, errMsg string) error
 	MoveToDeadLetter(tx *gorm.DB, msg db.Message, errMsg string) error
+	GetDB() *gorm.DB
 }
 
 type MessageRepository struct {
@@ -113,4 +114,8 @@ func (r *MessageRepository) MoveToDeadLetter(tx *gorm.DB, msg db.Message, errMsg
 		FailedAt:          time.Now(),
 	}
 	return tx.Create(&deadLetter).Error
+}
+
+func (r *MessageRepository) GetDB() *gorm.DB {
+	return r.db
 }

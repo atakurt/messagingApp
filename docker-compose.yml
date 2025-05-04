@@ -17,7 +17,7 @@ services:
       - "traefik.http.routers.messagingapp.rule=PathPrefix(`/`)"
       - "traefik.http.routers.messagingapp.entrypoints=web"
       - "traefik.http.services.messagingapp.loadbalancer.server.port=8080"
-      - "traefik.http.services.messagingapp.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.messagingapp.loadbalancer.healthcheck.path=/ready"
       - "traefik.http.services.messagingapp.loadbalancer.healthcheck.interval=5s"
     depends_on:
       postgres:

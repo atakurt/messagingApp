@@ -36,6 +36,20 @@ func (m *MockMessageRepositoryInterface) EXPECT() *MockMessageRepositoryInterfac
 	return m.recorder
 }
 
+// GetDB mocks base method.
+func (m *MockMessageRepositoryInterface) GetDB() *gorm.DB {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDB")
+	ret0, _ := ret[0].(*gorm.DB)
+	return ret0
+}
+
+// GetDB indicates an expected call of GetDB.
+func (mr *MockMessageRepositoryInterfaceMockRecorder) GetDB() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDB", reflect.TypeOf((*MockMessageRepositoryInterface)(nil).GetDB))
+}
+
 // GetMessageRetries mocks base method.
 func (m *MockMessageRepositoryInterface) GetMessageRetries(arg0 *gorm.DB, arg1 int) ([]db.MessageRetry, error) {
 	m.ctrl.T.Helper()

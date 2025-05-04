@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wiremock-mappings
+  namespace: messaging-app
+data:
+  mock-webhook.json: |
+    {
+      "request": {
+        "method": "POST",
+        "url": "/webhook"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "message": "Accepted",
+          "messageId": "{{randomValue type='UUID'}}"
+        }
+      }
+    }

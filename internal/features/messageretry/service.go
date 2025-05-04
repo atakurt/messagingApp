@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"gorm.io/gorm"
 	"io"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/atakurt/messagingApp/internal/features/sendmessages"
 	"github.com/atakurt/messagingApp/internal/infrastructure/config"
@@ -25,11 +26,11 @@ type MessageRetryServiceInterface interface {
 }
 
 type MessageRetryService struct {
-	repository *repository.MessageRepository
+	repository repository.MessageRepositoryInterface
 	httpClient httpClient.Client
 }
 
-func NewService(repository *repository.MessageRepository, httpClient httpClient.Client) *MessageRetryService {
+func NewService(repository repository.MessageRepositoryInterface, httpClient httpClient.Client) *MessageRetryService {
 	return &MessageRetryService{
 		repository: repository,
 		httpClient: httpClient,
@@ -67,7 +68,7 @@ func (s *MessageRetryService) ProcessMessageRetries(ctx context.Context) {
 }
 
 func (s *MessageRetryService) beginTransaction() (*db.Transaction, error) {
-	tx := db.DB.Begin()
+	tx := s.repository.GetDB().Begin()
 	if tx.Error != nil {
 		logger.Log.Error("Failed to begin transaction", zap.Error(tx.Error))
 		return nil, tx.Error

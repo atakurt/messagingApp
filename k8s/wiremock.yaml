@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wiremock
+  namespace: messaging-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wiremock
+  template:
+    metadata:
+      labels:
+        app: wiremock
+    spec:
+      containers:
+        - name: wiremock
+          image: wiremock/wiremock:3.13.0
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: wiremock-mappings
+              mountPath: /home/wiremock/mappings
+          args: ["--global-response-templating"]
+      volumes:
+        - name: wiremock-mappings
+          configMap:
+            name: wiremock-mappings
