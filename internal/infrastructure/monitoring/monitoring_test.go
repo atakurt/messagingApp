@@ -1,7 +1,6 @@
 package monitoring
 
 import (
-	"database/sql"
 	"errors"
 	"testing"
 
@@ -10,34 +9,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	"gorm.io/gorm"
 )
-
-type MockDB struct {
-	sqlDB   *sql.DB
-	dbErr   error
-	pingErr error
-}
-
-func (m *MockDB) GetSQLDB() (*sql.DB, error) {
-	if m.dbErr != nil {
-		return nil, m.dbErr
-	}
-	return nil, nil
-}
-
-func (m *MockDB) GetDB() *gorm.DB {
-	return nil
-}
-
-func (m *MockDB) Begin() *gorm.DB {
-	return nil
-}
 
 func TestNewMonitoringService(t *testing.T) {
 	// given
-	mockDB := &MockDB{}
-	mockRedisClient := mocks.NewMockRedisClient(gomock.NewController(t))
+	ctrl := gomock.NewController(t)
+	mockDB := mocks.NewMockDBInterface(ctrl)
+	mockRedisClient := mocks.NewMockRedisClient(ctrl)
 
 	// when
 	service := NewMonitoringService(mockDB, mockRedisClient)
@@ -50,8 +28,9 @@ func TestNewMonitoringService(t *testing.T) {
 
 func TestMonitoringService_Liveness(t *testing.T) {
 	// given
-	mockDB := &MockDB{}
-	mockRedisClient := mocks.NewMockRedisClient(gomock.NewController(t))
+	ctrl := gomock.NewController(t)
+	mockDB := mocks.NewMockDBInterface(ctrl)
+	mockRedisClient := mocks.NewMockRedisClient(ctrl)
 	service := NewMonitoringService(mockDB, mockRedisClient)
 
 	app := fiber.New()
@@ -69,12 +48,10 @@ func TestMonitoringService_Liveness(t *testing.T) {
 func TestMonitoringService_Readiness_DBConnectionError(t *testing.T) {
 	// given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockRedisClient := mocks.NewMockRedisClient(ctrl)
-	mockDB := &MockDB{
-		dbErr: errors.New("DB connection error"),
-	}
+	mockDB := mocks.NewMockDBInterface(ctrl)
+	mockDB.EXPECT().GetSQLDB().Return(nil, errors.New("DB connection error"))
 
 	service := NewMonitoringService(mockDB, mockRedisClient)
 
@@ -86,6 +63,6 @@ func TestMonitoringService_Readiness_DBConnectionError(t *testing.T) {
 	err := service.Readiness(ctx)
 
 	// then
-	assert.NoError(t, err) // The method returns no error, but sets status code
+	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusServiceUnavailable, ctx.Response().StatusCode())
 }

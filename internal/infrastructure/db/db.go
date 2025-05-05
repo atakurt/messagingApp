@@ -13,6 +13,7 @@ import (
 	"moul.io/zapgorm2"
 )
 
+//go:generate mockgen -destination=../../mocks/mock_db_client.go -package=mocks github.com/atakurt/messagingApp/internal/infrastructure/db DBInterface
 type DBInterface interface {
 	GetSQLDB() (*sql.DB, error)
 	GetDB() *gorm.DB
@@ -36,6 +37,8 @@ func (g *GormDB) Begin() *gorm.DB {
 }
 
 var DB DBInterface
+
+type Transaction = gorm.DB
 
 func Init() {
 	var err error
@@ -64,11 +67,4 @@ func Init() {
 
 	// Set the global DB instance
 	DB = &GormDB{DB: gormDB}
-}
-
-type Transaction = gorm.DB
-
-// SetDB allows setting a mock DB for testing
-func SetDB(db DBInterface) {
-	DB = db
 }
