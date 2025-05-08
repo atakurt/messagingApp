@@ -109,7 +109,7 @@ func (s *MessageService) processMessagesConcurrently(ctx context.Context, tx *db
 			}()
 
 			// Process the message and track if successful
-			if s.processMessage(ctx, tx, &msg, &mu) {
+			if s.processMessage(ctx, tx, &msg) {
 				mu.Lock()
 				processedMessages++
 				mu.Unlock()
@@ -122,7 +122,7 @@ func (s *MessageService) processMessagesConcurrently(ctx context.Context, tx *db
 	return processedMessages
 }
 
-func (s *MessageService) processMessage(ctx context.Context, tx *db.Transaction, msg *db.Message, mu *sync.Mutex) bool {
+func (s *MessageService) processMessage(ctx context.Context, tx *db.Transaction, msg *db.Message) bool {
 	redisKey := "message:" + strconv.Itoa(int(msg.ID))
 
 	if !s.canProcessMessage(ctx, redisKey, msg.ID) {
@@ -130,20 +130,19 @@ func (s *MessageService) processMessage(ctx context.Context, tx *db.Transaction,
 	}
 
 	now := time.Now()
-	mu.Lock()
 	err := s.repository.MarkMessageInProcess(tx, msg, now)
-	mu.Unlock()
+
 	if err != nil {
 		logger.Log.Error("Failed to mark message in process", zap.Uint("messageID", msg.ID), zap.Error(err))
 		return false
 	}
 
-	hookResp, err := s.sendMessageToWebhook(tx, msg, mu)
+	hookResp, err := s.sendMessageToWebhook(tx, msg)
 	if err != nil {
 		return false
 	}
 
-	return s.finalizeMessageProcessing(ctx, tx, msg, hookResp, now, redisKey, mu)
+	return s.finalizeMessageProcessing(ctx, tx, msg, hookResp, now, redisKey)
 }
 
 func (s *MessageService) canProcessMessage(ctx context.Context, redisKey string, messageID uint) bool {
@@ -172,23 +171,26 @@ func (s *MessageService) canProcessMessage(ctx context.Context, redisKey string,
 	return true
 }
 
-func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Message, mu *sync.Mutex) (*HookResponse, error) {
+func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Message) (*HookResponse, error) {
 	payload := WebhookPayload{Message: msg.Content, To: msg.PhoneNumber}
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
 		logger.Log.Error("Failed to encode payload to JSON", zap.Error(err))
-		mu.Lock()
-		s.repository.UpdateMessageAsError(tx, msg, err.Error())
-		mu.Unlock()
+		err := s.repository.UpdateMessageAsError(tx, msg, err.Error())
+		if err != nil {
+			logger.Log.Error("Failed to update message as error", zap.Error(err))
+			return nil, err
+		}
 		return nil, err
 	}
 
 	resp, err := s.httpClient.Post(config.Cfg.WebhookUrl, "application/json", buf)
 	if err != nil {
 		logger.Log.Error("Failed to send message", zap.Error(err))
-		mu.Lock()
-		s.repository.InsertRetry(tx, *msg, err.Error())
-		mu.Unlock()
+		insertErr := insertRetry(tx, msg, s, err)
+		if insertErr != nil {
+			return nil, insertErr
+		}
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -196,22 +198,33 @@ func (s *MessageService) sendMessageToWebhook(tx *db.Transaction, msg *db.Messag
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Log.Error("Failed to read webhook response", zap.Error(err))
-		mu.Lock()
-		s.repository.InsertRetry(tx, *msg, err.Error())
-		mu.Unlock()
+		insertErr := insertRetry(tx, msg, s, err)
+		if insertErr != nil {
+			return nil, insertErr
+		}
 		return nil, err
 	}
 
 	var hookResp HookResponse
 	if err := json.Unmarshal(bodyBytes, &hookResp); err != nil {
 		logger.Log.Error("Failed to parse webhook response", zap.ByteString("body", bodyBytes), zap.Error(err))
-		mu.Lock()
-		s.repository.InsertRetry(tx, *msg, err.Error())
-		mu.Unlock()
+		insertErr := insertRetry(tx, msg, s, err)
+		if insertErr != nil {
+			return nil, insertErr
+		}
 		return nil, err
 	}
 
 	return &hookResp, nil
+}
+
+func insertRetry(tx *db.Transaction, msg *db.Message, s *MessageService, webhookErr error) error {
+	err := s.repository.InsertRetry(tx, *msg, webhookErr.Error())
+	if err != nil {
+		logger.Log.Error("Failed to insert message as retry", zap.Error(err))
+		return err
+	}
+	return webhookErr
 }
 
 func (s *MessageService) finalizeMessageProcessing(
@@ -221,15 +234,11 @@ func (s *MessageService) finalizeMessageProcessing(
 	hookResp *HookResponse,
 	timestamp time.Time,
 	redisKey string,
-	mu *sync.Mutex,
 ) bool {
-	mu.Lock()
 	if err := s.repository.UpdateMessageAsSent(tx, msg, hookResp.MessageID, timestamp); err != nil {
 		logger.Log.Error("Failed to update message", zap.Uint("messageID", msg.ID), zap.Error(err))
-		mu.Unlock()
 		return false
 	}
-	mu.Unlock()
 
 	// todo retry caching with exponencial backoff
 	err := s.redisClient.Set(ctx, redisKey, timestamp.String(), time.Hour)

@@ -37,6 +37,20 @@ func (m *MockRedisClient) EXPECT() *MockRedisClientMockRecorder {
 	return m.recorder
 }
 
+// Close mocks base method.
+func (m *MockRedisClient) Close(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockRedisClientMockRecorder) Close(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockRedisClient)(nil).Close), arg0)
+}
+
 // Exists mocks base method.
 func (m *MockRedisClient) Exists(arg0 context.Context, arg1 string) (bool, error) {
 	m.ctrl.T.Helper()

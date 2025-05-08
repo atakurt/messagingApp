@@ -1,7 +1,8 @@
-package messagecontrol
+package start
 
 import (
 	"errors"
+	"github.com/atakurt/messagingApp/internal/features/messagecontrol"
 	"testing"
 
 	"github.com/atakurt/messagingApp/internal/mocks"
@@ -13,7 +14,7 @@ import (
 
 func TestSchedulerError(t *testing.T) {
 	originalErr := errors.New("original error")
-	schedulerErr := &SchedulerError{
+	schedulerErr := &messagecontrol.SchedulerError{
 		Operation: "test",
 		Err:       originalErr,
 	}

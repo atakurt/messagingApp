@@ -1,4 +1,4 @@
-package messagecontrol
+package list_sent
 
 import (
 	"github.com/atakurt/messagingApp/internal/infrastructure/db"
@@ -11,7 +11,6 @@ type ListSentServiceInterface interface {
 	ListSentMessages(c *fiber.Ctx) error
 }
 
-// Define a repository interface
 type MessageRepositoryInterface interface {
 	GetSentMessages(lastID, limit int) ([]db.Message, error)
 }

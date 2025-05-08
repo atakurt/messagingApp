@@ -1,4 +1,4 @@
-package messagecontrol
+package stop
 
 import (
 	"errors"

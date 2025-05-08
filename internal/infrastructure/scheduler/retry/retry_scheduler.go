@@ -1,4 +1,4 @@
-package scheduler
+package retry
 
 import (
 	"context"
@@ -8,8 +8,13 @@ import (
 	"github.com/atakurt/messagingApp/internal/infrastructure/config"
 	"github.com/atakurt/messagingApp/internal/infrastructure/logger"
 	"github.com/atakurt/messagingApp/internal/infrastructure/redis"
-	"go.uber.org/zap"
+	redisClient "github.com/atakurt/messagingApp/internal/infrastructure/redis"
 )
+
+type RetrySchedulerInterface interface {
+	Start(ctx context.Context)
+	Stop(ctx context.Context)
+}
 
 type RetryScheduler struct {
 	service     messageretry.MessageRetryServiceInterface
@@ -33,11 +38,6 @@ func (s *RetryScheduler) Start(ctx context.Context) {
 		logger.Log.Warn("Retry scheduler already running")
 		return
 	}
-
-	// Start the command subscription goroutine first
-	go func() {
-		s.subscribeToCommands(ctx)
-	}()
 
 	// Only start the processing goroutine if scheduler is enabled
 	if s.cfg.Scheduler.Enabled {
@@ -75,37 +75,6 @@ func (s *RetryScheduler) startProcessing(ctx context.Context) {
 	logger.Log.Info("Retry scheduler started with processing enabled")
 }
 
-func (s *RetryScheduler) subscribeToCommands(ctx context.Context) {
-	pubsub := s.redisClient.Subscribe(ctx, "scheduler:commands")
-	defer pubsub.Close()
-
-	for {
-		msg, err := pubsub.ReceiveMessage(ctx)
-		if err != nil {
-			logger.Log.Error("Failed to receive message from Redis", zap.Error(err))
-			continue
-		}
-
-		switch msg.Payload {
-		case "start":
-			if !s.running && s.cfg.Scheduler.Enabled {
-				s.startProcessing(ctx)
-			} else if !s.cfg.Scheduler.Enabled {
-				logger.Log.Warn("Cannot start scheduler: scheduler is disabled in config")
-			}
-		case "stop":
-			s.running = false
-			if s.ticker != nil {
-				s.ticker.Stop()
-				s.ticker = nil
-			}
-			logger.Log.Info("Retry scheduler stopped via Redis command")
-		default:
-			logger.Log.Warn("Unknown command received", zap.String("command", msg.Payload))
-		}
-	}
-}
-
 func (s *RetryScheduler) Stop(ctx context.Context) {
 	if !s.running {
 		logger.Log.Warn("Retry scheduler is not running")
@@ -118,4 +87,8 @@ func (s *RetryScheduler) Stop(ctx context.Context) {
 		s.ticker = nil
 	}
 	logger.Log.Info("Retry scheduler stopped")
+}
+
+func publishCommand(ctx context.Context, redisClient redisClient.Client, command string) error {
+	return redisClient.Publish(ctx, "scheduler:commands", command)
 }

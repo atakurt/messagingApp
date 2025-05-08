@@ -1,6 +1,7 @@
-package messagecontrol
+package stop
 
 import (
+	"github.com/atakurt/messagingApp/internal/features/messagecontrol"
 	redisClient "github.com/atakurt/messagingApp/internal/infrastructure/redis"
 	"github.com/atakurt/messagingApp/internal/infrastructure/scheduler"
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,7 @@ import (
 func StopHandler(ctx *fiber.Ctx, redisClient redisClient.Client) error {
 	err := scheduler.PublishCommand(ctx.Context(), redisClient, "stop")
 	if err != nil {
-		schedulerErr := &SchedulerError{
+		schedulerErr := &messagecontrol.SchedulerError{
 			Operation: "stop",
 			Err:       err,
 		}

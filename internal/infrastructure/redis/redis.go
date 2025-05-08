@@ -15,6 +15,7 @@ type Client interface {
 	Subscribe(ctx context.Context, channel string) *PubSub
 	Publish(ctx context.Context, channel string, message interface{}) error
 	Ping(ctx context.Context) *redis.StatusCmd
+	Close(ctx context.Context) error
 }
 
 // PubSub represents a Redis Pub/Sub subscription
@@ -77,4 +78,8 @@ func (r *RedisClient) Publish(ctx context.Context, channel string, message inter
 
 func (r *RedisClient) Ping(ctx context.Context) *redis.StatusCmd {
 	return r.client.Ping(ctx)
+}
+
+func (r *RedisClient) Close(ctx context.Context) error {
+	return r.client.WithContext(ctx).Close()
 }

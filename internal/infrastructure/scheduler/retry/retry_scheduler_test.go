@@ -1,7 +1,9 @@
-package scheduler
+package retry
 
 import (
 	"context"
+	redisClient "github.com/atakurt/messagingApp/internal/infrastructure/redis"
+	goRedis "github.com/go-redis/redis/v8"
 	"testing"
 	"time"
 
@@ -12,6 +14,32 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
+
+type MockPubSub struct {
+	done chan struct{}
+}
+
+func NewMockPubSub() *redisClient.PubSub {
+	return redisClient.NewPubSub(&goRedis.PubSub{})
+}
+
+func (m *MockPubSub) ReceiveMessage(ctx context.Context) (*goRedis.Message, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-m.done:
+		return nil, nil
+	}
+}
+
+func (m *MockPubSub) Close() error {
+	close(m.done)
+	return nil
+}
+
+func createMockPubSub() *redisClient.PubSub {
+	return NewMockPubSub()
+}
 
 func TestNewRetryScheduler(t *testing.T) {
 	logger.Log = zap.NewNop()
@@ -171,8 +199,8 @@ func TestRetryScheduler_SubscribeToCommands(t *testing.T) {
 	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	scheduler.Start(ctx)
 
-	// Test PublishCommand
-	err := PublishCommand(ctx, mockRedis, "start")
+	// Test publishCommand
+	err := publishCommand(ctx, mockRedis, "start")
 	assert.NoError(t, err)
 
 	// Wait for context to timeout
@@ -206,8 +234,8 @@ func TestRetryScheduler_SubscribeToCommands_UnknownCommand(t *testing.T) {
 	scheduler := NewRetryScheduler(mockService, mockRedis, getTestConfig())
 	scheduler.Start(ctx)
 
-	// Test PublishCommand with unknown command
-	err := PublishCommand(ctx, mockRedis, "unknown")
+	// Test publishCommand with unknown command
+	err := publishCommand(ctx, mockRedis, "unknown")
 	assert.NoError(t, err)
 
 	// Wait for context to timeout

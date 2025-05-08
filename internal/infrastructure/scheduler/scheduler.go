@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	redisClient "github.com/atakurt/messagingApp/internal/infrastructure/redis"
 
 	"github.com/atakurt/messagingApp/internal/features/sendmessages"
@@ -17,7 +15,6 @@ import (
 type SchedulerInterface interface {
 	Start(ctx context.Context)
 	Stop(ctx context.Context)
-	SubscribeToCommands(ctx context.Context)
 }
 
 type Scheduler struct {
@@ -31,34 +28,7 @@ type Scheduler struct {
 
 func NewScheduler(service sendmessages.MessageServiceInterface, redisClient redisClient.Client) *Scheduler {
 	s := &Scheduler{messageService: service, redisClient: redisClient}
-	go s.SubscribeToCommands(context.Background())
 	return s
-}
-
-func (s *Scheduler) SubscribeToCommands(ctx context.Context) {
-	pubsub := s.redisClient.Subscribe(ctx, "scheduler:commands")
-	defer pubsub.Close()
-
-	// Listen for messages
-	for {
-		msg, err := pubsub.ReceiveMessage(ctx)
-		if err != nil {
-			logger.Log.Error("Error receiving message from Redis Pub/Sub", zap.Error(err))
-			time.Sleep(time.Second * 5) // Wait before reconnecting
-			continue
-		}
-
-		switch msg.Payload {
-		case "start":
-			logger.Log.Info("Received start command via Pub/Sub")
-			s.Start(ctx)
-		case "stop":
-			logger.Log.Info("Received stop command via Pub/Sub")
-			s.Stop(ctx)
-		default:
-			logger.Log.Warn("Unknown scheduler command received", zap.String("payload", msg.Payload))
-		}
-	}
 }
 
 func (s *Scheduler) Start(ctx context.Context) {

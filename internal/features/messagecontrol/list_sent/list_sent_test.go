@@ -1,4 +1,4 @@
-package messagecontrol
+package list_sent
 
 import (
 	"errors"
