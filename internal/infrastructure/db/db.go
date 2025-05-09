@@ -61,7 +61,7 @@ func Init() {
 	if err != nil {
 		logger.Log.Fatal("Failed to get DB from GORM", zap.Error(err))
 	}
-	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxOpenConns(5)
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetConnMaxLifetime(2 * time.Minute)
 
